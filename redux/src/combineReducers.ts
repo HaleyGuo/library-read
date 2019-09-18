@@ -9,7 +9,7 @@ import {
   ActionFromReducersMapObject
 } from './types/reducers'
 import { CombinedState } from './types/store'
-
+//警告：对于给定的action类型，reducer不应返回undefined
 function getUndefinedStateErrorMessage(key: string, action: Action) {
   const actionType = action && action.type
   const actionDescription =
@@ -22,6 +22,7 @@ function getUndefinedStateErrorMessage(key: string, action: Action) {
   )
 }
 
+//警告：传入的state的keys不对
 function getUnexpectedStateShapeWarningMessage(
   inputState: object,
   reducers: ReducersMapObject,
@@ -137,11 +138,13 @@ export default function combineReducers<M extends ReducersMapObject<any, any>>(
   ActionFromReducersMapObject<M>
 >
 export default function combineReducers(reducers: ReducersMapObject) {
-  const reducerKeys = Object.keys(reducers)
-  const finalReducers: ReducersMapObject = {}
+  const reducerKeys = Object.keys(reducers)//获取reducers对象的key
+  const finalReducers: ReducersMapObject = {}//存放最终的reducer
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
-
+    // 获取每一个 key 对应的 value
+    // 在开发环境下判断值是否为 undefined
+    // 然后将值类型是函数的值放入 finalReducers
     if (process.env.NODE_ENV !== 'production') {
       if (typeof reducers[key] === 'undefined') {
         warning(`No reducer provided for key "${key}"`)
@@ -152,10 +155,12 @@ export default function combineReducers(reducers: ReducersMapObject) {
       finalReducers[key] = reducers[key]
     }
   }
-  const finalReducerKeys = Object.keys(finalReducers)
+  const finalReducerKeys = Object.keys(finalReducers)//拿到过滤后的 reducers 的 key 值
 
   // This is used to make sure we don't warn about the same
   // keys multiple times.
+  // 用来保证不重复的对同一个key发出警告
+  // 在开发环境下判断，保存不期望 key 的缓存用以下面做警告
   let unexpectedKeyCache: { [key: string]: true }
   if (process.env.NODE_ENV !== 'production') {
     unexpectedKeyCache = {}
@@ -167,7 +172,9 @@ export default function combineReducers(reducers: ReducersMapObject) {
   } catch (e) {
     shapeAssertionError = e
   }
-
+  // combineReducers 函数返回一个函数，也就是合并后的 reducer 函数
+  // 该函数返回总的 state
+  // 并且你也可以发现这里使用了闭包，函数里面使用到了外面的一些属性
   return function combination(
     state: StateFromReducersMapObject<typeof reducers> = {},
     action: AnyAction
